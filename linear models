@@ -1,0 +1,287 @@
+# Predict-DVD-sales
+
+# Read the DVD sales data in a file 
+dvdsales <- read.csv("dvdds.csv", header = T)
+
+#Since attractiveness is a factor, converting it to a factor 
+dvdsales$attractiveness <- as.factor(dvdsales$attractiveness)
+
+#Picking up a random sample for training data 
+set.seed(1)
+dvdds <-sample(nrow(dvdsales), nrow(dvdsales)*.3)
+x1<-sample(200,200*.7)
+
+#dvd_train is a data set to train our model
+dvd_train <- dvdsales[dvdds,]
+
+#a scatter plot between sales and all the other three fators  shows a linear relationship between them
+scatter.smooth(sales~advertise)
+scatter.smooth(sales~plays)
+scatter.smooth(sales~as.factor(attractiveness))
+
+#Drawing out boxplot to fetch outliers
+boxplot(dvd_train$advertise, main="advertise", sub=paste("Outlier rows: ", boxplot.stats(dvd_train$advertise)$out))
+boxplot(dvd_train$plays, main="plays", sub=paste("Outlier rows: ", boxplot.stats(dvd_train$plays)$out))
+boxplot(dvd_train$attractiveness, main="attractiveness", sub=paste("Outlier rows: ", boxplot.stats(dvd_train$attractiveness)$out))
+
+# Finding out the correlation between the variables
+> cor(dvd_train$sales , dvd_train$plays)
+[1] 0.6683222
+
+> cor(dvd_train$sales , dvd_train$advertise)
+[1] 0.6013017
+
+> cor(dvd_train$sales , dvd_train$attractiveness)
+[1] 0.3374163
+
+#dvd_test is a data set to test the model
+dmod1 <- lm(sales~.,data=dvd_train)
+
+Call:
+lm(formula = sales ~ ., data = dvd_train)
+
+Coefficients:
+    (Intercept)        advertise            plays  attractiveness2  attractiveness4 
+      -62.39437          0.07901          4.28537         -1.62716         80.03254  
+attractiveness5  attractiveness6  attractiveness7  attractiveness8  attractiveness9  
+       91.98872         87.41759        100.36185         99.96791        116.82659
+       
+       
+# Fetch the summary to see if the model is statistically independent
+summary(dmod1)
+
+lm(formula = sales ~ ., data = dvd_train)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-131.022  -22.048    1.381   23.790  130.938 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(>|t|)    
+(Intercept)     -62.39437   47.37356  -1.317   0.1938    
+advertise         0.07901    0.01283   6.157 1.25e-07 ***
+plays             4.28537    0.51775   8.277 6.22e-11 ***
+attractiveness2  -1.62716   64.39362  -0.025   0.9799    
+attractiveness4  80.03254   56.12740   1.426   0.1601    
+attractiveness5  91.98872   53.17867   1.730   0.0898 .  
+attractiveness6  87.41759   48.31957   1.809   0.0764 .  
+attractiveness7 100.36185   47.17249   2.128   0.0383 *  
+attractiveness8  99.96791   47.03299   2.125   0.0385 *  
+attractiveness9 116.82659   49.35223   2.367   0.0218 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 45.11 on 50 degrees of freedom
+Multiple R-squared:  0.7761,	Adjusted R-squared:  0.7358 
+F-statistic: 19.25 on 9 and 50 DF,  p-value: 2.195e-13
+
+> modelCoeffs
+                    Estimate  Std. Error     t value     Pr(>|t|)
+(Intercept)     -62.39437259 47.37355531 -1.31707178 1.938190e-01
+advertise         0.07901184  0.01283316  6.15685191 1.247976e-07
+plays             4.28537276  0.51774706  8.27696198 6.222042e-11
+attractiveness2  -1.62716303 64.39362045 -0.02526901 9.799410e-01
+attractiveness4  80.03254287 56.12740011  1.42590861 1.601086e-01
+attractiveness5  91.98871684 53.17867148  1.72980472 8.983455e-02
+attractiveness6  87.41759291 48.31956793  1.80915510 7.644090e-02
+attractiveness7 100.36184598 47.17248969  2.12755033 3.832897e-02
+attractiveness8  99.96790798 47.03299157  2.12548479 3.850924e-02
+attractiveness9 116.82659292 49.35223258  2.36719976 2.183477e-02
+
+> beta.estimate <- modelCoeffs["plays", "Estimate"] # get beta estimate for speed
+> beta.estimate
+[1] 4.285373
+
+> std.error <- modelCoeffs["plays", "Std. Error"] # get std.error for plays
+> std.error
+[1] 0.5177471
+
+> t_value <- beta.estimate/std.error # calc t statistic
+> t_value
+[1] 8.276962
+
+> p_value <- 2*pt(-abs(t_value), df=nrow(dvd_train)-ncol(dvd_train))  # calc p Value
+> p_value
+[1] 2.712945e-11
+
+> f_statistic <- dmod1$fstatistic[1]  # fstatistic
+> f_statistic
+NULL
+
+> model_p <- pf(f[1], f[2], f[3], lower=FALSE)
+> model_p
+       value 
+2.194795e-13 
+
+> AIC(dmod1)
+[1] 638.4205
+> BIC(dmod1)
+[1] 661.4583
+
+# Linear Regression Analysis
+As we can see from the summary that the p-vlaue for advertise and plays is lower than the standard norm 0.05. From this we can deduce
+that plays and advertise direclty impact sales.
+so changing our linear model to include plays and advertise 
+dmod1 <- lm(sales~ plays + advertise,data=dvd_train)
+
+Call:
+lm(formula = sales ~ plays + advertise, data = dvd_train)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-124.211  -24.883    7.989   27.882  135.847 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 24.03217   16.50948   1.456    0.151    
+plays        4.46761    0.51173   8.730 4.27e-12 ***
+advertise    0.08573    0.01121   7.646 2.67e-10 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 46.66 on 57 degrees of freedom
+Multiple R-squared:  0.7268,	Adjusted R-squared:  0.7172 
+F-statistic: 75.83 on 2 and 57 DF,  p-value: < 2.2e-16
+
+> beta.estimate <- modelCoeffs["plays", "Estimate"] # get beta estimate for speed
+> beta.estimate
+[1] 4.46761
+
+> std.error <- modelCoeffs["plays", "Std. Error"] # get std.error for plays
+> std.error
+[1] 0.5117349
+
+> t_value <- beta.estimate/std.error # calc t statistic
+> t_value
+[1] 8.73032
+
+> p_value <- 2*pt(-abs(t_value), df=nrow(dvd_train)-ncol(dvd_train))  # calc p Value
+> p_value
+[1] 4.934726e-12
+
+> f_statistic
+NULL
+
+> model_p <- pf(f[1], f[2], f[3], lower=FALSE)
+> model_p
+       value 
+8.673501e-17 
+
+> AIC(dmod1)
+[1] 636.3468
+> BIC(dmod1)
+[1] 644.7241
+
+#Calculating t-statistic and p-Values with plays variable
+dvd_summ_mod <- summary(dmod1)
+Call:
+lm(formula = sales ~ plays, data = dvd_train)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-181.828  -37.781   -5.559   37.899  117.990 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  70.2019    21.6799   3.238  0.00199 ** 
+plays         4.9088     0.7174   6.842 5.39e-09 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 65.84 on 58 degrees of freedom
+Multiple R-squared:  0.4467,	Adjusted R-squared:  0.4371 
+F-statistic: 46.82 on 1 and 58 DF,  p-value: 5.391e-09
+
+modelCoeffs <- dvd_summ_mod$coefficients
+> modelCoeffs
+                Estimate  Std. Error  t value     Pr(>|t|)
+(Intercept) 140.70844647 14.69008225 9.578466 1.493819e-13
+advertise     0.09676803  0.01688435 5.731228 3.764349e-07
+
+beta.estimate <- modelCoeffs["plays", "Estimate"] # get beta estimate for speed
+std.error <- modelCoeffs["plays", "Std. Error"] # get std.error for plays
+t_value <- beta.estimate/std.error # calc t statistic
+> t_value
+[1] 6.842293
+
+p_value <- 2*pt(-abs(t_value), df=nrow(dvd_train)-ncol(dvd_train))  # calc p Value
+> p_value
+[1] 6.304306e-09
+
+f_statistic <- dmod1$fstatistic[1]  # fstatistic
+> f_statistic
+NULL
+
+model_p <- pf(f[1], f[2], f[3], lower=FALSE)
+> model_p
+       value 
+5.391422e-09 
+
+> AIC(dmod1)
+[1] 676.7008
+
+> BIC(dmod1)
+[1] 682.9838
+
+#Fitting the model with advertise variable
+dmod1 <- lm(sales~ advertise,data=dvd_train)
+
+dvd_summ_mod <- summary(dmod1)
+
+Call:
+lm(formula = sales ~ advertise, data = dvd_train)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-129.88  -57.06    6.60   45.35  205.20 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 140.70845   14.69008   9.578 1.49e-13 ***
+advertise     0.09677    0.01688   5.731 3.76e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 70.72 on 58 degrees of freedom
+Multiple R-squared:  0.3616,	Adjusted R-squared:  0.3506 
+F-statistic: 32.85 on 1 and 58 DF,  p-value: 3.764e-07
+
+
+modelCoeffs <- dvd_summ_mod$coefficients
+beta.estimate <- modelCoeffs["plays", "Estimate"] # get beta estimate for advertise
+> beta.estimate
+[1] 4.285373
+
+std.error <- modelCoeffs["plays", "Std. Error"] # get std.error for advertise
+> std.error
+[1] 0.5177471
+
+t_value <- beta.estimate/std.error # calc t statistic
+> t_value
+[1] 6.842293
+
+p_value <- 2*pt(-abs(t_value), df=nrow(dvd_train)-ncol(dvd_train))  # calc p Value
+> p_value
+[1] 6.304306e-09
+
+f_statistic <- dmod1$fstatistic[1]  # fstatistic
+> f_statistic
+NULL
+
+f <- summary(dmod1)$fstatistic  # parameters for model p-value calc
+model_p <- pf(f[1], f[2], f[3], lower=FALSE)
+> model_p
+       value 
+3.764349e-07 
+
+> AIC(dmod1)
+[1] 685.2831
+
+> BIC(dmod1)
+[1] 691.5662
+     
+     
+     
+After analysing and comparing all the four methods we can deduce that the best fit model is 
+lm(sales ~ plays + advertise, data = dvdsales)
+     
