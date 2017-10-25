@@ -283,5 +283,5 @@ model_p <- pf(f[1], f[2], f[3], lower=FALSE)
      
      
 After analysing and comparing all the four methods we can deduce that the best fit model is 
-lm(sales ~ plays + advertise, data = dvdsales)
+lm(sales ~ plays, data = dvdsales)
      
